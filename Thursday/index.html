@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <title>Thursday Tasks</title>
+    <style>
+        * {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f8ff;
+}
+
+.container {
+    background-color: #fff;
+    width: 400px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 24px;
+    color: #333;
+}
+
+.header a {
+    color: #007bff;
+    font-size: 32px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.header a:hover {
+    color: #0056b3;
+}
+
+.task-list {
+    margin-top: 20px;
+}
+
+.task {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    word-wrap: break-word;
+}
+
+.task.completed {
+    background-color: #d4edda;
+    transform: scale(1.05);
+    text-decoration: line-through;
+    color: #888;
+}
+
+.task h2 {
+    font-size: 18px;
+    color: #555;
+    word-wrap: break-word;
+    max-width: 250px;
+}
+
+.task .actions {
+    display: flex;
+    gap: 10px;
+}
+
+.task a {
+    color: #007bff;
+    font-size: 24px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.task a:hover {
+    color: #0056b3;
+}
+
+.task .done-btn {
+    color: #28a745;
+}
+
+.task .edit-btn {
+    color: #ffc107;
+}
+
+.task .delete-btn {
+    color: #ff4757;
+}
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+
+        <div class="header">
+            <h1>Thursday Tasks</h1>
+            <a href="#" id="add-task-btn"><i class='bx bx-plus'></i></a>
+        </div>    
+
+        <div class="task-list" id="task-list">
+            <!-- Tasks will be added here -->
+        </div>
+        
+    </div>
+   
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTasks);
+
+document.getElementById('add-task-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    let taskDescription = prompt("Enter task description:");
+    
+    if (taskDescription) {
+        addTask(taskDescription);
+        saveTask(taskDescription, false);
+    }
+});
+
+function addTask(description, isCompleted = false) {
+    let taskList = document.getElementById('task-list');
+    let taskItem = document.createElement('div');
+    taskItem.className = 'task';
+    if (isCompleted) {
+        taskItem.classList.add('completed');
+    }
+    
+    let taskContent = document.createElement('h2');
+    taskContent.textContent = description;
+    
+    let actions = document.createElement('div');
+    actions.className = 'actions';
+    
+    let doneBtn = document.createElement('a');
+    doneBtn.href = '#';
+    doneBtn.className = 'done-btn';
+    doneBtn.innerHTML = '<i class="bx bx-check"></i>';
+    
+    doneBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        taskItem.classList.toggle('completed');
+        updateTaskInStorage(description, taskItem.classList.contains('completed'));
+    });
+    
+    let editBtn = document.createElement('a');
+    editBtn.href = '#';
+    editBtn.className = 'edit-btn';
+    editBtn.innerHTML = '<i class="bx bx-edit"></i>';
+    
+    editBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        let newDescription = prompt("Edit task description:", taskContent.textContent);
+        if (newDescription) {
+            taskContent.textContent = newDescription;
+            updateTaskDescriptionInStorage(description, newDescription);
+            description = newDescription;
+        }
+    });
+    
+    let deleteBtn = document.createElement('a');
+    deleteBtn.href = '#';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.innerHTML = '<i class="bx bx-trash"></i>';
+    
+    deleteBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        taskList.removeChild(taskItem);
+        removeTaskFromStorage(description);
+    });
+    
+    actions.appendChild(doneBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    
+    taskItem.appendChild(taskContent);
+    taskItem.appendChild(actions);
+    
+    taskList.appendChild(taskItem);
+}
+
+function saveTask(description, isCompleted) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.push({ description, isCompleted });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function loadTasks() {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks.forEach(task => {
+        addTask(task.description, task.isCompleted);
+    });
+}
+
+function updateTaskInStorage(description, isCompleted) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks = tasks.map(task => {
+        if (task.description === description) {
+            return { description, isCompleted };
+        }
+        return task;
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function updateTaskDescriptionInStorage(oldDescription, newDescription) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks = tasks.map(task => {
+        if (task.description === oldDescription) {
+            return { description: newDescription, isCompleted: task.isCompleted };
+        }
+        return task;
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function removeTaskFromStorage(description) {
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    tasks = tasks.filter(task => task.description !== description);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+    </script>
+</body>
+</html>
